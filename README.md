@@ -3,4 +3,5 @@
 
 
 # Reference:
-https://techmaster.vn/posts/36809/viet-api-su-dung-fiber-framework-postgresql-trong-go-phan-1
+https://techmaster.vn/posts/36809/viet-api-su-dung-fiber-framework-postgresql-trong-go-phan-1\  
+https://techmaster.vn/posts/35065/series-golang-co-ban-phan-21-goroutines
