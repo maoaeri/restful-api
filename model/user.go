@@ -6,6 +6,7 @@ import (
 )
 
 type Users struct {
+	ID       int    `json:"ID"`
 	Name     string `json:"name"`
 	Birthday string `json:"birthday"`
 	Sex      string `json:"sex"`
@@ -25,7 +26,7 @@ func GetAllUsers(db *sql.DB) ([]Users, error) {
 
 	for rows.Next() {
 		var u Users
-		if err := rows.Scan(&u.Name, &u.Birthday, &u.Sex, &u.Email); err != nil {
+		if err := rows.Scan(&u.ID, &u.Name, &u.Birthday, &u.Sex, &u.Email); err != nil {
 			return nil, err
 		}
 		users = append(users, u)
@@ -34,8 +35,20 @@ func GetAllUsers(db *sql.DB) ([]Users, error) {
 	return users, nil
 }
 
-func CreateUser(db *sql.DB, u Users) error {
-	query := fmt.Sprintf("INSERT INTO users VALUE (%v, %v, %v, %v )", u.Name, u.Birthday, u.Sex, u.Birthday)
+func CreateUser(db *sql.DB, u Users) (id int, err error) {
+	query := fmt.Sprintf("INSERT INTO users VALUES (DEFAULT, '%v', '%v', '%v', '%v') RETURNING ID", u.Name, u.Birthday, u.Sex, u.Email)
+	err = db.QueryRow(query).Scan(&id)
+	if err != nil {
+		return id, err
+	}
+	//ID, err := res.LastInsertId()
+	//u.ID = ID
+	fmt.Printf("dm")
+	return id, nil
+}
+
+func DeleteUser(db *sql.DB, u Users) error {
+	query := fmt.Sprintf("DELETE FROM users WHERE name='%v'", u.Name)
 	_, err := db.Exec(query)
 	if err != nil {
 		return err

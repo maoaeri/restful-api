@@ -25,6 +25,7 @@ func (a *App) InitDB(user, password, name string) {
 		panic(err)
 	}
 	q := `CREATE TABLE IF NOT EXISTS users (
+		ID SERIAL PRIMARY KEY,
 		Name VARCHAR(255),
 		Birthday VARCHAR(255),
 		Sex VARCHAR(255),
@@ -62,6 +63,14 @@ func RespondJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(res)
 }
 
+func (a *App) GenerateID() int64 {
+	query := "SELECT COUNT (*) FROM users"
+	res, _ := a.DB.Exec(query)
+	ID, _ := res.LastInsertId()
+	fmt.Print(res)
+	return ID
+}
+
 func (a *App) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := model.GetAllUsers(a.DB)
 	if err != nil {
@@ -79,7 +88,25 @@ func (a *App) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if err := model.CreateUser(a.DB, u); err != nil {
+	id, err := model.CreateUser(a.DB, u)
+	if err != nil {
+		RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	u.ID = id
+	RespondJSON(w, http.StatusCreated, u)
+}
+
+func (a *App) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	var u model.Users
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&u); err != nil {
+		RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	defer r.Body.Close()
+
+	if err := model.DeleteUser(a.DB, u); err != nil {
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
