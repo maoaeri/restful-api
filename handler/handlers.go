@@ -8,6 +8,7 @@ import (
 	"log"
 	"myapp/model"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -37,6 +38,9 @@ func (a *App) InitDB(user, password, name string) {
 func (a *App) InitRouter() {
 	a.Router.HandleFunc("/users", a.GetAllUsers).Methods("GET")
 	a.Router.HandleFunc("/create/user", a.CreateUser).Methods("POST")
+	a.Router.Path("/search").Queries("name", "{name}").HandlerFunc(a.SearchUserByName).Methods("GET")
+	a.Router.HandleFunc("/delete/{id}", a.DeleteUser).Methods("GET")
+	a.Router.HandleFunc("/modify/{id}", a.ModifyUser).Methods("POST")
 	a.Router.HandleFunc("/foo", func(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "Hello, %q", html.EscapeString(r.URL.Path))
 
@@ -97,18 +101,56 @@ func (a *App) CreateUser(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusCreated, u)
 }
 
-func (a *App) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	var u model.Users
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&u); err != nil {
-		RespondError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	defer r.Body.Close()
+func (a *App) SearchUserByName(w http.ResponseWriter, r *http.Request) {
 
-	if err := model.DeleteUser(a.DB, u); err != nil {
+	params := mux.Vars(r)
+	name := params["name"]
+	users, err := model.SearchUserByName(a.DB, name)
+
+	if err != nil {
 		RespondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	RespondJSON(w, http.StatusCreated, u)
+	RespondJSON(w, http.StatusOK, users)
+}
+
+func (a *App) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := model.DeleteUser(a.DB, id); err != nil {
+		RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondJSON(w, http.StatusOK, map[string]string{"message": "User deleted"})
+}
+
+func (a *App) ModifyUser(w http.ResponseWriter, r *http.Request) {
+	var u model.Users
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+
+	if err != nil {
+		RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	u.ID = id
+
+	decoder := json.NewDecoder(r.Body)
+
+	if err := decoder.Decode(&u); err != nil {
+		RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	defer r.Body.Close()
+	if err := model.ModifyUser(a.DB, u); err != nil {
+		RespondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondJSON(w, http.StatusOK, map[string]string{"message": "User modified"})
 }

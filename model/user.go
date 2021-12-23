@@ -47,8 +47,40 @@ func CreateUser(db *sql.DB, u Users) (id int, err error) {
 	return id, nil
 }
 
-func DeleteUser(db *sql.DB, u Users) error {
-	query := fmt.Sprintf("DELETE FROM users WHERE name='%v'", u.Name)
+func DeleteUser(db *sql.DB, id int) error {
+	query := fmt.Sprintf("DELETE FROM users WHERE id=%v", id)
+	_, err := db.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SearchUserByName(db *sql.DB, name string) ([]Users, error) {
+	query := fmt.Sprintf("SELECT * FROM users WHERE name='%v';", name)
+	rows, err := db.Query(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	users := []Users{}
+
+	for rows.Next() {
+		var u Users
+		if err := rows.Scan(&u.ID, &u.Name, &u.Birthday, &u.Sex, &u.Email); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+
+	return users, nil
+}
+
+func ModifyUser(db *sql.DB, u Users) error {
+	query := fmt.Sprintf("UPDATE users SET name='%v', birthday='%v', sex='%v', email='%v' WHERE ID=%v", u.Name, u.Birthday, u.Sex, u.Email, u.ID)
 	_, err := db.Exec(query)
 	if err != nil {
 		return err
