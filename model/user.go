@@ -41,8 +41,6 @@ func CreateUser(db *sql.DB, u Users) (id int, err error) {
 	if err != nil {
 		return id, err
 	}
-	//ID, err := res.LastInsertId()
-	//u.ID = ID
 	fmt.Printf("dm")
 	return id, nil
 }
