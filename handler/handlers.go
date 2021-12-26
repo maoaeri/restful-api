@@ -67,14 +67,6 @@ func RespondJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(res)
 }
 
-func (a *App) GenerateID() int64 {
-	query := "SELECT COUNT (*) FROM users"
-	res, _ := a.DB.Exec(query)
-	ID, _ := res.LastInsertId()
-	fmt.Print(res)
-	return ID
-}
-
 func (a *App) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := model.GetAllUsers(a.DB)
 	if err != nil {
