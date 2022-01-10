@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"html"
 	"log"
 	"myapp/model"
 	"net/http"
@@ -39,12 +38,8 @@ func (a *App) InitRouter() {
 	a.Router.HandleFunc("/users", a.GetAllUsers).Methods("GET")
 	a.Router.HandleFunc("/create/user", a.CreateUser).Methods("POST")
 	a.Router.Path("/search").Queries("name", "{name}").HandlerFunc(a.SearchUserByName).Methods("GET")
-	a.Router.HandleFunc("/delete/{id}", a.DeleteUser).Methods("GET")
-	a.Router.HandleFunc("/modify/{id}", a.ModifyUser).Methods("POST")
-	a.Router.HandleFunc("/foo", func(rw http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(rw, "Hello, %q", html.EscapeString(r.URL.Path))
-
-	}).Methods("GET")
+	a.Router.HandleFunc("/delete/{id}", a.DeleteUser).Methods("DELETE")
+	a.Router.HandleFunc("/modify/{id}", a.ModifyUser).Methods("PUT")
 }
 
 func (a *App) Init(user, password, name string) {
